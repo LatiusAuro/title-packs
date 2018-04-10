@@ -1,0 +1,25 @@
+Checkpoint Hunters
+
+Round End bonus points:
+
+Default Modifier is x1. For these examples, ModifierIncrease will be 25%
+
+If CaptureTiers is 2:
+0-49% gives x1, 50-99% gives x1.25, 100% gives x1.75
+
+If CaptureTiers is 3:
+0-33% gives x1, 34-66% gives x1.25, 67-99% gives x1.5, 100% gives x2
+
+If CaptureTiers is 4:
+0-24% gives x1, 25-49% gives x1.25, 50-74% gives x1.5, 75-99% gives x1.75, 100% gives x2.25
+
+If CaptureTiers is 5:
+0-19% gives x1, 20-39% gives x1.25, 40-59% gives x1.5, 60-79% gives x1.75, 80-99% gives x2, 100% gives x2.5
+
+
+Checkpoint Freshness:
+
+If the CP hasn't been captured yet, it is considered Super Fresh, and is marked as green on the minimap
+If the CP has been captured, but has at least 50% of the points remaining, it is considered Fresh, and is marked as gold on the minimap unless the player has captured it already
+If the CP has been captured, and has less than 50% of the points remaining, but has not hit the minimum of 0/1 points, it is considered Not Fresh, and is marked as silver on the minimap unless the player has captured it already
+If the CP has been captured and is at 0 points, or 1 point if AlwaysGivePoints is true, it is considered Stale, and is marked as bronze on the minimap unless the player has captured it already
