@@ -1,0 +1,19 @@
+Auro's Goal Pursuit Mode
+
+Scoring:
+
+Team Thief:
++6/+3/+1 for capturing a CP (First Goal/Second Goal/Third Goal) [+3/+2/+1 to Capture Streak Score]
++1 for capturing a CP at a higher speed than the current speed record for that goal (Second Goal/Third Goal only) [+1 to Capture Streak Score]
++1 for surviving a capture of a thief
+-1 for hitting the OffZone
+-2 for a Quick Respawn [-1 to Capture Streak Score unless Capture Streak Score == 0] 
+-50% Capture Streak Score, rounded down, if caught by a Cop (Capture Streak Score reset to 0, and switch to Team Cop)
++Capture Streak Score at the end of a round
+
+Team Cop:
++1 to +5 for being the first cop(s) (Dependant on number of players)
++3 for denying capture of First Goal [+1 Cop Streak Score]
++50% Thief's Capture Streak Score, rounded down + Cop Streak Score on capture of a theif [+1 Cop Streak Score] (Cop Streak Score turns to Capture Streak Score, and switch to Team Thief with 5 seconds of immunity, if Team Cop players > Team Thief Players)
+-1 for hitting the OffZone
++Cop Streak Score at the end of a round

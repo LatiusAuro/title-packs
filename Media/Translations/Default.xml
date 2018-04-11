@@ -149,6 +149,19 @@
 		<sk>Táto mapa nie je platná, prechádzam na ďalšiu.</sk>
 	</segment>
 	<segment>
+		<en>This map is invalid. Skipping...</en>
+		<cs>Tato mapa není platná. Skákání...</cs>
+		<da>Dette map er ikke gyldigt.  Springer...</da>
+		<de>Diese Karte ist ungültig. Überspringen...</de>
+		<es>Este mapa no es válido. Salto a la comba...</es>
+		<fi>Nykyinen kartta ei ole kelpo. Hyppään...</fi>
+		<fr>Cette carte n&apos;est pas valide. Saut...</fr>
+		<nl>Deze map is niet geldig. Het overslaan...</nl>
+		<pl>Ta mapa nie może być rozgrywana, przechodzenie do następnej...</pl>
+		<ru>Невозможно загрузить карту. Пропуская...</ru>
+		<sk>Táto mapa nie je platná. Preskakovanie...</sk>
+	</segment>
+	<segment>
 		<en>Storage Music Player</en>
 		<cs>Úložný prostor skladeb</cs>
 		<da>Lager Musik Afspiller</da>
