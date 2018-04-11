@@ -54,7 +54,6 @@ Highest combined score at the end of the match wins!
 #Setting S_SpeedBonus				False	as _("Grant a bonus modifier for the fastest captures of select CPs")
 #Setting S_SpeedBonusModifier		10		as _("Percentage increase to multiplier for each top speed CP (Min 5%, Max 50%)")
 #Setting S_SpeedBonusCheckPoints	3		as _("Number of CPs to grant the Speed Bonus for (Min 1, Max 5)")
-#Setting S_DiscordChatWebhhook		""		as "<hidden>" ///< Link to a Discord webhook used for chat logs. 
 
 
 // ---------------------------------- //
@@ -474,7 +473,7 @@ Void CaptureCheckpoint(CTmPlayer _Player, Integer _CheckpointId) {
 	TopScores::AddPoints(_Player.Score, "GoalHuntTM:Capture", Points);
 	
 	Notify player about the capture
-	Translations::SendStatusMessage(_Player, ["You've captured a #%1 CP!", GoalFreshness, 3000, 1);
+	Translations::SendStatusMessage(_Player, ["You've captured a %1 CP!", GoalFreshness, 3000, 1);
 	PUR_PlaySound(_Player, CUIConfig::EUISound::Checkpoint, 0);
 
 	declare Integer NumCapturedCheckpoints for _Player;
@@ -500,8 +499,8 @@ Void CaptureCheckpoint(CTmPlayer _Player, Integer _CheckpointId) {
 	// Update Checkpoint status
 	if (GoalFreshness != 3){ //Only do if the CP isn't Stale
 		GoalPoints -= S_CapturePointReduction;
-		if (GoalPoints <= 1 && S_AlwaysGivePoints) {
-			GoalPoints = 1;
+		if (GoalPoints <= C_MinPoints && S_AlwaysGivePoints) {
+			GoalPoints = C_MinPoints;
 			GoalFreshness = 3;
 		}
 		else if (GoalPoints <= 0) {
