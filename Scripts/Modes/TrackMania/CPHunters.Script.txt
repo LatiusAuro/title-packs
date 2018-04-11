@@ -1,6 +1,6 @@
 // --------------------------------------- \\
 // CHECKPOINT HUNTERS MODE by Latius Auro  \\
-// Script version v1.0.0                   \\
+// Script version v0.8.0                   \\
 // Based on Domino's Goal Hunt mode script \\
 // --------------------------------------- \\
 
@@ -19,7 +19,7 @@ Highest combined score at the end of the match wins!
 #Extends "Modes/TrackMania/ModePursuit.Script.txt"
 
 #Const CompatibleMapTypes  			"GoalHuntArena" //Uses the same arenas as GoalHunt
-#Const Version              		"1.0.0"
+#Const Version              		"0.8.0"
 #Const ScriptName           		"Modes/TrackMania/CPHunters.Script.txt"
 
 #Include "TextLib" as TextLib
