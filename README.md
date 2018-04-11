@@ -7,11 +7,11 @@ All ManiaScript libraries written by Dommy for ManiaPlanet gaming system. Files 
 
 ## Documentation
 
-A full documentation of my work is under (long) construction. 👷 As soon something is finished, it will be linked here...
+A full documentation of Donny's work is under (long) construction. 👷 As soon something is finished, it will be linked here...
 
 ## Useful links
 
 * [ManiaPlanet - platform for TrackMania² and ShootMania games by Nadeo](http://maniaplanet.com/)
-* [My Facebook blog](https://facebook.com/dominotitles)
-* [My YouTube channel](https://youtube.com/dommy54x)
+* [Domino's Facebook blog](https://facebook.com/dominotitles)
+* [Dommy's YouTube channel](https://youtube.com/dommy54x)
 * [Discord server for ShootMania Galaxy & TrackMania² Pursuit](https://discord.gg/BBHC3sT)
