@@ -1,6 +1,6 @@
 // --------------------------------------- \\
 // CHECKPOINT HUNTERS MODE by Latius Auro  \\
-// Script version v0.8.0                   \\
+// Script version v0.8.2 (12/04/18)        \\
 // Based on Domino's Goal Hunt mode script \\
 // --------------------------------------- \\
 
@@ -19,7 +19,7 @@ Highest combined score at the end of the match wins!
 #Extends "Modes/TrackMania/ModePursuit.Script.txt"
 
 #Const CompatibleMapTypes  			"GoalHuntArena" //Uses the same arenas as GoalHunt
-#Const Version              		"0.8.0"
+#Const Version              		"0.8.2"
 #Const ScriptName           		"Modes/TrackMania/CPHunters.Script.txt"
 
 #Include "TextLib" as TextLib
@@ -31,29 +31,15 @@ Highest combined score at the end of the match wins!
 // ---------------------------------- //
 // Settings
 // ---------------------------------- //
-#Setting S_TimeLimit				300 	as _("Time limit per round in seconds (Min 60s, Max 720s) (Set to 0 for no time limit)")
-#Setting S_CPBasedTimeLimit			false	as _("Should the Time Limit depend on how many CPs there are?")
-#Setting S_BaseTimeLimit			60		as _("The base time limit in seconds if CPBasedTimeLimit is on (Min 60s, Max 300s)")
-#Setting S_ExtraTime				10		as _("How many extra seconds for exery Checkpoint after the fifth to grant (Min 1s, Max 20s)")
-#Setting S_TimeLimitCap				720		as _("The maxinum time which any one map can have in total (Min 180s, Max 720s - must be more than BaseTimeLimit)")
-#Setting S_SelectionTimeLimit		10		as _("How long in seconds to select which car to use (Min 5s, Max 20s)")
-#Setting S_LagoonUnlock				0		as _("Lagoon Car avalability  - 0 for Lagoon Only,  1 for Planet Purchase, 2 for Unlocked")
-#Setting S_ValleyUnlock				2		as _("Valley Car avalability  - 0 for Valley Only,  1 for Planet Purchase, 2 for Unlocked")
-#Setting S_CanyonUnlock				2		as _("Canyon Car avalability  - 0 for Canyon Only,  1 for Planet Purchase, 2 for Unlocked")
-#Setting S_StadiumUnlock			2		as _("Stadium Car avalability - 0 for Stadium Only, 1 for Planet Purchase, 2 for Unlocked")
-#Setting S_OneTimeUnlock			True	as _("Planet Purchases last for the entire server")
-#Setting S_UnlockPeriod				600		as _("How long a Planet Purchase is valid for, if OneTimeUnlock is not set, in seconds (Min 60s)")
+#Setting S_TimeLimit				300 	as _("Base Time Limit/round(Min 60s, Max 600s) (0 = No Limit)")
+#Setting S_CPBasedTimeLimit			False	as _("Should the Time Limit depend on how many CPs there are?")
+#Setting S_ExtraTime				10		as _("Extra seconds for every Checkpoint after tenth (Min 1s, Max 20s)")
 #Setting S_NumRounds				3		as _("How many rounds per match to play (Min 1, Max 5)")
-#Setting S_MaxPointsPerCapture		12		as _("Max number of points for the first capture of a Checkpoint (Min 3)")
+#Setting S_MaxPointsPerCapture		12		as _("Max points for first capture of Checkpoint (Min 3)")
 #Setting S_CapturePointReduction	1		as _("How many points to deduct from a Checkpoint when captured (Min 1)")
-#Setting S_AlwaysGivePoints			True	as _("CPs always give at least 1 point when captured")
-#Setting S_ResetScoreLeavers		True	as _("Reset scores of players that left the game at the match end")
-#Setting S_CapturePercentModifier	True	as _("Gives a multiplier depending on how many CPs were captured")
-#Setting S_ModifierIncrease			25		as _("Percentage increase to multiplier per tier (Min 5%, Max 100%)")
-#Setting S_CaptureTiers				4		as _("Number of tiers (excluding 100%) to have for the multiplier (Min 2, Max 5)")
-#Setting S_SpeedBonus				False	as _("Grant a bonus modifier for the fastest captures of select CPs")
-#Setting S_SpeedBonusModifier		10		as _("Percentage increase to multiplier for each top speed CP (Min 5%, Max 50%)")
-#Setting S_SpeedBonusCheckPoints	3		as _("Number of CPs to grant the Speed Bonus for (Min 1, Max 5)")
+#Setting S_CapturePercentModifier	True	as _("Gives multiplier dependant on CP percentage")
+#Setting S_ModifierIncrease			25		as _("Percentage increase per tier (Min 5%, Max 100%)")
+#Setting S_CaptureTiers				4		as _("Tiers for multiplier bonus (Min 2, Max 5)")
 
 
 // ---------------------------------- //
@@ -66,27 +52,22 @@ The fresher the Checkpoint, the more it's worth.
 Highest Score once someone collects all Checkpoints, or when time runs out, wins.""")
 #Const C_NbCheckpointsRequired		5	// Min number of Checkpoints needed to be a valid map
 #Const C_RespawnPenaltyPoints		-1	// Penalty for respawning
-#Const C_MinPoints					1	// Min points if AlwaysGivePoints is True
+#Const C_MinPoints					1	// Min points
+#Const C_TimeLimitCap				900	// Absolute max value for the Time Limit
 
 // Min and Max values for settings:
-#Const C_MinTimeLimit				60	// Min value for TimeLimit and BaseTimeLimit
-#Const C_MaxTimeLimit				720	// Max value for TimeLimit and TimeLimitCap
+#Const C_MinTimeLimit				60	// Min value for TimeLimit
+#Const C_MaxTimeLimit				600	// Max value for TimeLimit
 #Const C_MinExtraTime 				1	// Min value for ExtraTimeLimit
 #Const C_MaxExtraTime				20	// Mac value for ExtraTimeLimit
-#Const C_MaxBaseTimeLimit			300 // Max value for BaseTimeLimit
-#Const C_MinTimeLimitCap			180 // Min value for TimeLimitCap
-#Const C_MinUnlockPeriod			60	// Min value for UnlockPeriod
 #Const C_MinRounds					1	// Min value for NumRounds
 #Const C_MaxRounds					5	// Max value for NumRounds
 #Const C_MinReduction				1	// Min value for CapturePointReduction
 #Const C_MinMaxPointsPerCapture		3	// Min value for MaxPointsPerCapture
-#Const C_MinModIncrease				5	// Min value for ModifierIncrease and SpeedBonusModifier
+#Const C_MinModIncrease				5	// Min value for ModifierIncrease
 #Const C_MaxModifierIncrease		100	// Max value for ModifierIncrease
-#Const C_MaxSpeedBonusModifier		50	// Max value for SpeedBonusModifier
 #Const C_MinCaptureTiers			2	// Min value for CaptureTiers
 #Const C_MaxCaptureTiers			5	// Max value for CaptureTiers
-#Const C_MinSpeedBonusCheckPoints	1	// Min value for SpeedBonusCheckPoints
-#Const C_MaxSpeedBonusCheckPoints	5	// Max value for SpeedBonusCheckPoints
 
 //Freshness Colours for the Checkpoints
 #Const C_SuperFreshCP				<0.0, 1.0, 0.0>		//Colour for a Super Fresh (Unclaimed) CP [0F0]	(Green)
@@ -94,7 +75,7 @@ Highest Score once someone collects all Checkpoints, or when time runs out, wins
 #Const C_NotFreshCP					<0.5, 0.5, 0.5>		//Colour for a Not Fresh (<50% points) CP [888]	(Silver)
 #Const C_StaleCP					<0.85, 0.5, 0.2>	//Colour for a Stale (0/1 point) CP [D83]		(Bronze)
 
-#Const C_CheckpointsColors [C_SuperFreshCP, C_FreshCP, C_NotFreshCP, C_StaleCP]
+#Const C_CheckpointsColors [<0.0, 1.0, 0.0>, <1.0, 0.9, 0.0>, <0.5, 0.5, 0.5>, <0.85, 0.5, 0.2>]
 
 // ---------------------------------- //
 // Globales
@@ -104,11 +85,24 @@ declare Integer[] G_CheckpointsList;		// All checkpoints which are currently in 
 declare Integer[] G_CheckpointScore;		// The current number of points on offer for a Checkpoint
 declare Integer[] G_CheckpointFreshness;	// How fresh a Checkpoint currently is
 
-declare Text[] G_FreshnessText = ["Super Fresh", "Fresh", "Not Fresh", "Stale"];
+declare Text[] G_FreshnessText;
+declare Text[] G_CreatedMapMarkers;
 
 declare Integer StartTime;
 declare Integer CurrentTimeLimit;			// The set time limit
 declare Integer NumCPs;						//Total number of CPs
+declare Ident CPLeaderId;		//ID of the player who has the most CPs captured
+
+//Global variables of settings
+declare Integer G_TimeLimit;
+declare Integer G_ExtraTime;
+declare Integer G_CarUnlock;
+declare Integer G_UnlockPeriod;
+declare Integer G_NumRounds;
+declare Integer G_MaxPointsPerCapture;
+declare Integer G_CapturePointReduction;
+declare Integer G_ModifierIncrease;
+declare Integer G_CaptureTiers;
 
 
 // ---------------------------------- //
@@ -145,6 +139,8 @@ Layers::SetType("GoalHuntTM:Markers", CUILayer::EUILayerType::Markers);
 //Layers::Create("GoalHuntTM:Countdown", CreateManialinkCountdown());
 Layers::Create("GoalHuntTM:PointsCount", CreateManialinkPointsCount());
 
+G_FreshnessText = ["Super Fresh", "Fresh", "Not Fresh", "Stale"];
+
 PursuitUI::SetSafeTimeDuration(0);
 UpdateInterface();
 ***
@@ -169,13 +165,12 @@ declare Integer PrevTimeLimit;	//Previous Time Limit
 declare Integer MaxPoints;		//Current high score in the round
 declare Integer MaxCPs;			//Current CPs captured by the player who captured the most CPs
 declare Ident PointsLeaderId;	//ID of the player with the most points
-declare Ident CPLeaderId;		//ID of the player who has the most CPs captured
 
 
 
 //Load Checkpoints
 Checkpoints::LoadMap();
-NumCPs = Checkpoints::NbCheckpoints()
+NumCPs = Checkpoints::NbCheckpoints();
 
 //Check if the map is valid
 declare MapValidated = True;
@@ -183,11 +178,11 @@ declare MapType = "";
 foreach (I in TL::Split("\\", Map.MapType)) MapType = I;
 
 if (MapType != CompatibleMapTypes) MapValidated = False; //If it's not a GoalHuntArena, it can't be used
-if (NumCPs < C_NbCheckpointsRequired>) MapValidated = False; //If there's less than 5 Checkpoints, it can't be used
+if (NumCPs < C_NbCheckpointsRequired) MapValidated = False; //If there's less than 5 Checkpoints, it can't be used
 
 //Skip invalid maps
 if (!MapValidated) {
-	declare Msg = "This map is invalid. Skipping..."
+	declare Msg = "This map is invalid; moving to the next one.";
 	Translations::SendChat(Msg);
 	Chat::SendMessage(Msg);
 
@@ -208,16 +203,18 @@ G_CheckpointFreshness.clear();
 SettingCorrection();
 
 //Make sure the Time Limit is set correctly
-if !S_CPBasedTimeLimit {
+G_TimeLimit = S_TimeLimit;
+if (G_TimeLimit < 0) G_TimeLimit = 0; //Anything less than 0 is considered to be 0 (And thus infinite)
+if (G_TimeLimit > C_MaxTimeLimit) G_TimeLimit = C_MaxTimeLimit; //If the time limit is above the max, cap it.
+if (G_TimeLimit < C_MinTimeLimit && G_TimeLimit != 0) G_TimeLimit = C_MinTimeLimit; //If the time limit is below the min, but not 0, cap it
+	
+if (!S_CPBasedTimeLimit) {
 	//Fixed time limit
-	if (S_TimeLimit < 0) S_TimeLimit = 0; //Anything less than 0 is considered to be 0 (And thus infinite)
-	if (S_TimeLimit > C_MaxTimeLimit) S_TimeLimit = C_MaxTimeLimit; //If the time limit is above the max, cap it.
-	if (S_TimeLimit < C_MinTimeLimit && S_TimeLimit != 0) S_TimeLimit = C_MinTimeLimit; //If the time limit is below the min, but not 0, cap it
-	CurrentTimeLimit = S_TimeLimit
+	CurrentTimeLimit = G_TimeLimit;
 } else {
 	//Variable time limit
-	CurrentTimeLimit = S_BaseTimeLimit + ((Checkpoints::NbCheckpoints() - 5) * S_ExtraTime);
-	if (CurrentTimeLimit > S_TimeLimitCap) CurrentTimeLimit = S_TimeLimitCap;
+	if (Checkpoints::NbCheckpoints() >= C_NbCheckpointsRequired * 2) CurrentTimeLimit = G_TimeLimit + ((Checkpoints::NbCheckpoints() - (2 * C_NbCheckpointsRequired)) * G_ExtraTime);
+	if (CurrentTimeLimit > C_TimeLimitCap) CurrentTimeLimit = C_TimeLimitCap;
 }
 
 PrevTimeLimit = CurrentTimeLimit;
@@ -234,7 +231,7 @@ while (!ServerShutdownRequested && !MatchEndRequested && Players.count <= 0) MB_
 PUR_ShowCharSelection();
 
 // Scores
-if (Scores.existskey(0)) LeadId = Scores[0].User.Id;
+if (Scores.existskey(0)) PointsLeaderId = Scores[0].User.Id;
 
 // Init players
 foreach (Player in Players) {
@@ -299,7 +296,7 @@ foreach (Player in Players) {
 	foreach (I => CheckpointId in G_CheckpointsList) {
 		if (!Checkpoints::IsInTrigger(Player, CheckpointId)) continue;
 
-		CaptureCheckpoint(Player, CheckpointId);
+		MaxCPs = CaptureCheckpoint(Player, CheckpointId, MaxCPs);
 	}
 }
 
@@ -332,7 +329,7 @@ foreach (Player in Players) {
 if (Scores.existskey(0) && Scores[0].User.Id != PointsLeaderId) {
 	if (MaxPoints == 0) //First CP captured
 	{
-		Message::SendBigMessage(TL::Compose(_("$<%1$> captures the first CP!"), Scores[0].User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
+		Message::SendBigMessage(TL::Compose(_("$<%1$> captures the first Checkpoint!"), Scores[0].User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
 	} else {
 		//New Leader
 		Message::SendBigMessage(TL::Compose(_("$<%1$> takes the lead from $<%2$>!"), Scores[0].User.Name, Scores[PointsLeaderId].User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
@@ -344,10 +341,11 @@ if (Scores.existskey(0) && Scores[0].User.Id != PointsLeaderId) {
 
 // Update time limit if fixed time limit
 if (PrevTimeLimit != S_TimeLimit && !S_CPBasedTimeLimit) {
-	if (S_TimeLimit < 0) S_TimeLimit = 0; //Anything less than 0 is considered to be 0
-	if (S_TimeLimit > C_MaxTimeLimit) S_TimeLimit = C_MaxTimeLimit; //If the time limit is above the max, cap it.
-	if (S_TimeLimit < C_MinTimeLimit && S_TimeLimit != 0) S_TimeLimit = C_MinTimeLimit; //If the time limit is below the min, but not 0, cap it
-	CurrentTimeLimit = S_TimeLimit
+	G_TimeLimit = S_TimeLimit;
+	if (G_TimeLimit < 0) G_TimeLimit = 0; //Anything less than 0 is considered to be 0
+	if (G_TimeLimit > C_MaxTimeLimit) G_TimeLimit = C_MaxTimeLimit; //If the time limit is above the max, cap it.
+	if (G_TimeLimit < C_MinTimeLimit && G_TimeLimit != 0) G_TimeLimit = C_MinTimeLimit; //If the time limit is below the min, but not 0, cap it
+	CurrentTimeLimit = G_TimeLimit;
 
 	PrevTimeLimit = CurrentTimeLimit;
 	if (CurrentTimeLimit > 0) PUR_SetTimeLimit(StartTime + CurrentTimeLimit * 1000);
@@ -359,7 +357,7 @@ if (PrevTimeLimit != S_TimeLimit && !S_CPBasedTimeLimit) {
 //Trigger #1: One player capturing all CPS
 if (MaxCPs == NumCPs){
 	//Announce it
-	Message::SendBigMessage(TL::Compose(_("$<%1$> has captured all CPs!"), Scores[CPLeaderId].User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
+	Message::SendBigMessage(TL::Compose(_("$<%1$> has captured all Checkpoints!"), Scores[CPLeaderId].User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
 	PUR_PlaySound(CUIConfig::EUISound::VictoryPoint, 0);
 
 	//End the round
@@ -368,10 +366,11 @@ if (MaxCPs == NumCPs){
 }
 
 //Trigger #2: Time Over
-if (false){
+if (PUR_TimeReachedLimit()) {
 	Message::SendBigMessage(TL::Compose(_("Time has run out!")), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
 	
 	//End the round
+	PUR_DisableTimeLimit();
 	MB_StopRound();
 }
 ***
@@ -379,7 +378,6 @@ if (false){
 ***Match_EndRound***
 ***
 //Code to trigger at the end of a round
-UIManager.UIAll.CountdownEndTime = -1;
 PursuitUI::SetStartTime(-1);
 TopScores::RoundEnd();
 TM::WaitRaceAll();
@@ -387,33 +385,32 @@ Replay_Stop();
 
 MB_Sleep(1000);
 
+//Determine bonus points
+foreach (Player in Players) {
+	declare Integer scoremod = 0; //+0% Modifier
+
+	//Check how many CPs the player has captured compared to the total number of CPs and the Capture Tiers
+	if (S_CapturePercentModifier) {
+		declare Integer NumCapturedCheckpoints for Player;
+		declare Integer CaptureTierMod = ((NumCapturedCheckpoints * G_CaptureTiers) / NumCPs); //This gives a Real value between 0 and S_CaptureTiers
+		scoremod += (CaptureTierMod * G_ModifierIncrease);
+		if (CaptureTierMod == G_CaptureTiers) scoremod += G_ModifierIncrease; //100% capture rate increases the bonus modifier by another tier.
+	}
+
+	//Get the round score, and times it by scoremod, rounding if needed, before adding it to the score of the player
+	declare Integer BonusScore;
+	BonusScore = ((Player.Score.Points * scoremod)/100);
+	PUR_AddPoints(Player, BonusScore);
+}
+
 UIManager.UIAll.UISequence = CUIConfig::EUISequence::EndRound;
 UIManager.UIAll.ScoreTableVisibility = CUIConfig::EVisibility::ForcedVisible;
 Message::CleanAllMessages();
 PUR_PlaySound(CUIConfig::EUISound::EndRound, 0);
 
-//Determine bonus points
-foreach (Player in Players) {
-	declare Real scoremod = 0; //+0% Modifier
-
-	//Check how many CPs the player has captured compared to the total number of CPs and the Capture Tiers
-	if S_CapturePercentModifier{
-		declare Real CaptureTierMod = ((NumCapturedCheckpoints * S_CaptureTiers) / NumCPs); //This gives a Real value between 0 and S_CaptureTiers
-		scoremod += (MathLib::FloorInteger(CaptureTierMod) * S_ModifierIncrease);
-		if (MathLib::FloorInteger(CaptureTierMod) == S_CaptureTiers) scoremod += S_ModifierIncrease; //100% capture rate increases the bonus modifier by another tier.
-	}
-
-	//Check to see if they set the fastest speed on any of the selected CPs, and if so, add to the modifier
-
-	//Get the round score, and times it by scoremod, rounding if needed, before adding it to the score of the player
-	declare Integer BonusScore = 0;
-	BonusScore = (MathLib::NearestInteger(Player.Points * (scoremod/100))
-	PUR_AddPoints(Player, BonusScore);
-}
-
 // Stop map after reaching rounds limit
-if (MB_GetRoundCount() >= S_NumRounds) MB_StopMap();
-**
+if (MB_GetRoundCount() >= G_NumRounds) MB_StopMap();
+***
 
 ***Match_EndMap***
 ***
@@ -443,97 +440,13 @@ Layers::Detach("GoalHuntTM:PointsCount");
 ***EndServer***
 ***
 //Layers::Destroy("GoalHuntTM:Countdown");
-//Layers::Destroy("GoalHuntTM:Markers");
+Layers::Destroy("GoalHuntTM:Markers");
 Layers::Destroy("GoalHuntTM:PointsCount");
 ***
 
 // ---------------------------------- //
 // Functions
 // ---------------------------------- //
-
-// ---------------------------------- //
-/** Capture a checkpoint by a player
- *
- *	@param	_Player			The player that captures a checkpoint
- *	@param	_CheckpointId	Id of the checkpoint to capture
- */
-Void CaptureCheckpoint(CTmPlayer _Player, Integer _CheckpointId) {
-	if (_Player == Null || _CheckpointId == -1) return;
-	
-	// Check if player haven't captured this goal yet
-	declare Integer[] CapturedCheckpointsIds for _Player;
-	if (CapturedCheckpointsIds.exists(_CheckpointId)) return;
-	CapturedCheckpointsIds.add(_CheckpointId);
-
-
-	declare GoalPoints = G_CheckpointScore[_CheckpointId];
-	declare GoalFreshness = G_FreshnessText[G_CheckpointFreshness[_CheckpointId]];
-
-	PUR_AddPoints(_Player, GoalPoints);
-	TopScores::AddPoints(_Player.Score, "GoalHuntTM:Capture", Points);
-	
-	Notify player about the capture
-	Translations::SendStatusMessage(_Player, ["You've captured a %1 CP!", GoalFreshness, 3000, 1);
-	PUR_PlaySound(_Player, CUIConfig::EUISound::Checkpoint, 0);
-
-	declare Integer NumCapturedCheckpoints for _Player;
-	NumCapturedCheckpoints += 1;
-	if (NumCapturedCheckpoints > MaxCPs) {
-		MaxCPs = NumCapturedCheckpoints;
-
-		if (MaxCPs == (NumCPs - 1)){
-			//If the player has just got one CP left, announce it
-			Message::SendBigMessage(TL::Compose(_("$<%1$> has only 1 CP left to capture!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
-		}
-		else if (CPLeaderId != _Player.User.Id && !(MaxCPs == NumCPs) && !(MaxCPs == 1)){
-			Message::SendBigMessage(TL::Compose(_("$<%1$> is now leading in terms of number of CPs captured!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
-		}
-		
-		CPLeaderId = _Player.User.Id;
-	}
-	else if (NumCapturedCheckpoints == (NumCPs - 1)){
-		//If the player has just got one CP left, announce it
-		Message::SendBigMessage(TL::Compose(_("$<%1$> also has only 1 CP left to capture!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
-	}
-
-	// Update Checkpoint status
-	if (GoalFreshness != 3){ //Only do if the CP isn't Stale
-		GoalPoints -= S_CapturePointReduction;
-		if (GoalPoints <= C_MinPoints && S_AlwaysGivePoints) {
-			GoalPoints = C_MinPoints;
-			GoalFreshness = 3;
-		}
-		else if (GoalPoints <= 0) {
-			GoalPoints = 0;
-			GoalFreshness = 3;
-		}
-		else if (GoalPoints < (S_MaxPointsPerCapture / 2) {
-			GoalFreshness = 2;
-		}
-		else GoalFreshness = 1;
-
-		G_CheckpointFreshness[_CheckpointId] = GoalFreshness;
-		G_CheckpointScore = GoalPoints;
-	}
-
-	UpdateInterface();
-}
-
-// ---------------------------------------- //
-/** Set up the Checkpoints for a new round
- */
-Void PrepGoals() {
-
-	G_CheckpointsList = Checkpoints::List();
-	foreach (CheckP in G_CheckpointsList){
-		G_CheckpointScore.add(S_MaxPointsPerCapture);
-		G_CheckpointFreshness.add(0);
-	}
-	
-	// Update interfaces
-	UpdateInterface();
-	Minimap::Flash();
-}
 
 // ---------------------------------- //
 /** Get the Freshness of a checkpoint
@@ -543,7 +456,7 @@ Void PrepGoals() {
  *	@return		The checkpoint freshness as an integer
  */
 Integer GetGoalFreshness(Integer _CheckpointId) {
-	if (!G_CheckpointsOrder.exists(_CheckpointId)) return -1;
+	if (!G_CheckpointsList.exists(_CheckpointId)) return -1;
 	if (!G_CheckpointFreshness.exists(_CheckpointId)) return -1;
 	return G_CheckpointFreshness[_CheckpointId];
 }
@@ -556,7 +469,7 @@ Integer GetGoalFreshness(Integer _CheckpointId) {
  *	@return		The checkpoint score
  */
 Integer GetGoalPoints(Integer _CheckpointId) {
-	if (!G_CheckpointsOrder.exists(_CheckpointId)) return -1;
+	if (!G_CheckpointsList.exists(_CheckpointId)) return -1;
 	if (!G_CheckpointScore.exists(_CheckpointId)) return -1;
 	return G_CheckpointScore[_CheckpointId];
 }
@@ -570,7 +483,7 @@ Void UpdateInterface() {
 	declare netwrite Vec3[] Net_GoalHuntTM_GoalsOrder for Teams[0];
 	declare netwrite Vec3[][Text] Net_GoalHuntTM_CapturedGoals for Teams[0];
 	
-	Net_GoalHuntTM_NbMaxGoals = G_CheckpointsNbMax;
+	Net_GoalHuntTM_NbMaxGoals = NumCPs;
 	Net_GoalHuntTM_UpdateTime = Now;
 	Net_GoalHuntTM_GoalsOrder.clear();
 	Net_GoalHuntTM_CapturedGoals.clear();
@@ -603,65 +516,141 @@ Void UpdateInterface() {
 	foreach (CheckpointId in G_CheckpointsList) {
 		declare GoalFreshness = GetGoalFreshness(CheckpointId);
 		
-		// Configure marker apperance
-		declare MarkerId = G_FreshnessText[GoalFreshness]^" Goal";
-		declare Color = <1., 1., 1.>;
-		if (C_CheckpointsColors.existskey(GoalFreshness)) Color = C_CheckpointsColors[GoalFreshness];
+		// If a valid Freshness value
+		if (GoalFreshness != -1) {
+			// Configure marker apperance
+			declare MarkerId = G_FreshnessText[GoalFreshness]^" Goal";
+			declare Color = <1., 1., 1.>;
+			if (C_CheckpointsColors.existskey(GoalFreshness)) Color = C_CheckpointsColors[GoalFreshness];
 		
-		// Create marker
-		declare Position = Checkpoints::GetPosition(CheckpointId);
-		Minimap::SetMarker(MarkerId, "Goal.png", Color, Position);
-		G_CreatedMapMarkers.add(MarkerId);
+			// Create marker
+			declare Position = Checkpoints::GetPosition(CheckpointId);
+			Minimap::SetMarker(MarkerId, "Goal.png", Color, Position);
+			G_CreatedMapMarkers.add(MarkerId);
+		}
 	}
+}
+
+// ---------------------------------- //
+/** Capture a checkpoint by a player
+ *
+ *	@param	_Player			The player that captures a checkpoint
+ *	@param	_CheckpointId	Id of the checkpoint to capture
+ *	@param	MaxCPs			The current Max CPs
+ *
+ * @return  The new MaxCP
+ */
+Integer CaptureCheckpoint(CTmPlayer _Player, Integer _CheckpointId, Integer MaxCPs) {
+	if (_Player == Null || _CheckpointId == -1) return MaxCPs;
+	
+	// Check if player haven't captured this goal yet
+	declare Integer[] CapturedCheckpointsIds for _Player;
+	if (CapturedCheckpointsIds.exists(_CheckpointId)) return MaxCPs;
+	CapturedCheckpointsIds.add(_CheckpointId);
+
+
+	declare GoalPoints = G_CheckpointScore[_CheckpointId];
+	declare GoalFreshness = G_CheckpointFreshness[_CheckpointId];
+	if (GoalFreshness == -1) return MaxCPs;
+	declare GoalFreshnessText = G_FreshnessText[GoalFreshness];
+
+	PUR_AddPoints(_Player, GoalPoints);
+	TopScores::AddPoints(_Player.Score, "GoalHuntTM:Capture", GoalPoints);
+	
+	//Notify player about the capture
+	Translations::SendStatusMessage(_Player, "You've captured a "^GoalFreshnessText^" Checkpoint!", 3000, 1);
+	PUR_PlaySound(_Player, CUIConfig::EUISound::Checkpoint, 0);
+
+	declare Integer NumCapturedCheckpoints for _Player;
+	NumCapturedCheckpoints += 1;
+	declare Integer NewMaxCPs = MaxCPs;
+	if (NumCapturedCheckpoints > MaxCPs) {
+		NewMaxCPs = NumCapturedCheckpoints;
+
+		if (NewMaxCPs == (NumCPs - 1)){
+			//If the player has just got one CP left, announce it
+			Message::SendBigMessage(TL::Compose(_("$<%1$> has only 1 Checkpoint left to capture!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
+		}
+		else if (CPLeaderId != _Player.User.Id && !(MaxCPs == NumCPs) && !(MaxCPs == 1)){
+			Message::SendBigMessage(TL::Compose(_("$<%1$> is now leading in terms of number of Checkpoints captured!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
+		}
+		
+		CPLeaderId = _Player.User.Id;
+	}
+	else if (NumCapturedCheckpoints == (NumCPs - 1)){
+		//If the player has just got one CP left, announce it
+		Message::SendBigMessage(TL::Compose(_("$<%1$> also has only 1 Checkpoint left to capture!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
+	}
+
+	// Update Checkpoint status
+	if (GoalFreshness != 3){ //Only do if the CP isn't Stale
+		GoalPoints -= G_CapturePointReduction;
+		if (GoalPoints <= C_MinPoints) {
+			GoalPoints = C_MinPoints;
+			GoalFreshness = 3;
+		}
+		else if (GoalPoints < (G_MaxPointsPerCapture / 2)) {
+			GoalFreshness = 2;
+		}
+		else GoalFreshness = 1;
+
+		G_CheckpointFreshness[_CheckpointId] = GoalFreshness;
+		G_CheckpointScore[_CheckpointId] = GoalPoints;
+	}
+
+	UpdateInterface();
+	
+	return NewMaxCPs;
+}
+
+// ---------------------------------------- //
+/** Set up the Checkpoints for a new round
+ */
+Void PrepGoals() {
+
+	G_CheckpointsList = Checkpoints::List();
+	foreach (CheckP in G_CheckpointsList){
+		G_CheckpointScore.add(G_MaxPointsPerCapture);
+		G_CheckpointFreshness.add(0);
+	}
+	
+	// Update interfaces
+	UpdateInterface();
+	Minimap::Flash();
 }
 
 
 Void SettingCorrection() {
 	//Only correct the CP based Time Limit settings if active
-	if S_CPBasedTimeLimit{
-		if (S_BaseTimeLimit < C_MinTimeLimit) S_BaseTimeLimit = C_MinTimeLimit;
-		else if (S_BaseTimeLimit > C_MaxBaseTimeLimit) S_BaseTimeLimit = C_MaxBaseTimeLimit;
+	if (S_CPBasedTimeLimit) {
+		if (S_TimeLimit < C_MinTimeLimit) G_TimeLimit = C_MinTimeLimit;
+		else if (S_TimeLimit > C_MaxTimeLimit) G_TimeLimit = C_MaxTimeLimit;
+		else G_TimeLimit = S_TimeLimit;
 
-		if (S_ExtraTime < C_MinExtraTime) S_ExtraTime = C_MinExtraTime;
-		else if (S_ExtraTime > C_MaxExtraTime) S_ExtraTime = C_MaxExtraTime;
-
-		if (S_TimeLimitCap <= S_BaseTimeLimit) S_TimeLimitCap = S_BaseTimeLimit + (C_NbCheckpointsRequired * S_ExtraTime)
-
-		if (S_TimeLimitCap < C_MinTimeLimitCap) S_TimeLimitCap = C_MinTimeLimitCap;
-		else if (S_TimeLimitCap > C_MaxTimeLimit) S_TimeLimitCap = C_MaxTimeLimit;
+		if (S_ExtraTime < C_MinExtraTime) G_ExtraTime = C_MinExtraTime;
+		else if (S_ExtraTime > C_MaxExtraTime) G_ExtraTime = C_MaxExtraTime;
+		else G_ExtraTime = S_ExtraTime;
 	}
 
-	//Set unlock settings to default settings if invalid
-	if (S_LagoonUnlock < 0 || S_LagoonUnlock > 2) S_LagoonUnlock = 0;
-	if (S_ValleyUnlock < 0 || S_ValleyUnlock > 2) S_ValleyUnlock = 2;
-	if (S_CanyonUnlock < 0 || S_CanyonUnlock > 2) S_CanyonUnlock = 2;
-	if (S_StadiumUnlock < 0 || S_StadiumUnlock > 2) S_StadiumUnlock = 2;
+	if (S_NumRounds < C_MinRounds) G_NumRounds = C_MinRounds;
+	else if (S_NumRounds > C_MaxRounds) G_NumRounds = C_MaxRounds;
+	else G_NumRounds = S_NumRounds;
 
-	if (S_UnlockPeriod < C_MinUnlockPeriod) S_UnlockPeriod = C_MinUnlockPeriod;
+	if (S_MaxPointsPerCapture < C_MinMaxPointsPerCapture) G_MaxPointsPerCapture = C_MinMaxPointsPerCapture;
+	else G_MaxPointsPerCapture = S_MaxPointsPerCapture;
 
-	if (S_NumRounds < C_MinRounds) S_NumRounds = C_MinRounds;
-	else if (S_NumRounds > C_MaxRounds) S_NumRounds = C_MaxRounds;
-
-	if (S_MaxPointsPerCapture < C_MinMaxPointsPerCapture) S_MaxPointsPerCapture = C_MinMaxPointsPerCapture;
-
-	if (S_CapturePointReduction < C_MinReduction) S_CapturePointReduction = C_MinReduction;
+	if (S_CapturePointReduction < C_MinReduction) G_CapturePointReduction = C_MinReduction;
+	else G_CapturePointReduction = S_CapturePointReduction;
 
 	//Only do these if Capture Percent Modifier is active
-	if S_CapturePercentModifier{
-		if (S_ModifierIncrease < C_MinModIncrease) S_ModifierIncrease = C_MinModIncrease;
-		else if (S_ModifierIncrease > C_MaxModifierIncrease) S_ModifierIncrease = C_MaxModifierIncrease;
+	if (S_CapturePercentModifier) {
+		if (S_ModifierIncrease < C_MinModIncrease) G_ModifierIncrease = C_MinModIncrease;
+		else if (S_ModifierIncrease > C_MaxModifierIncrease) G_ModifierIncrease = C_MaxModifierIncrease;
+		else G_ModifierIncrease = S_ModifierIncrease;
 
-		if (S_CaptureTiers < C_MinCaptureTiers) S_CaptureTiers = C_MinCaptureTiers;
-		else if (S_CaptureTiers > C_MaxCaptureTiers) S_CaptureTiers = C_MaxCaptureTiers;
-	}
-
-	//Only do these if Speed Bonus Modifier is active
-	if S_SpeedBonus{
-		if (S_SpeedBonusModifier < C_MinModIncrease) S_SpeedBonusModifier = C_MinModIncrease;
-		else if (S_SpeedBonusModifier > C_MaxSpeedBonusModifier) S_SpeedBonusModifier = C_MaxSpeedBonusModifier;
-
-		if (S_SpeedBonusCheckPoints < C_MinSpeedBonusCheckPoints) S_SpeedBonusCheckPoints = C_MinSpeedBonusCheckPoints;
-		else if (S_SpeedBonusCheckPoints > C_MaxSpeedBonusCheckPoints) S_SpeedBonusCheckPoints = C_MaxSpeedBonusCheckPoints;
+		if (S_CaptureTiers < C_MinCaptureTiers) G_CaptureTiers = C_MinCaptureTiers;
+		else if (S_CaptureTiers > C_MaxCaptureTiers) G_CaptureTiers = C_MaxCaptureTiers;
+		else G_CaptureTiers = S_CaptureTiers;
 	}
 }
 
@@ -674,7 +663,7 @@ Text CreateManialinkMarkers() {
 	declare R = 9/16.;
 	
 	declare Text MarkersInstances;
-	for (I, 0, C_MaxNbPrevGoalsToCap)
+	for (I, 0, NumCPs)
 		MarkersInstances ^= "<frameinstance modelid='FrameModel_GoalMarker' id='Frame_GoalMarker#"^I^"' hidden='1' />";
 	
 	return """
@@ -798,10 +787,11 @@ if (UpdateMarkers > 0) {
 		declare Points = GetGoalPoints(CheckpointId);
 		
 		// ---------------------------------- //
-		// Ignore goal if captured by the spectated player
+		// Ignore goal if captured by the spectated player, or invalid
 		declare Vec3[] GUIPlayerGoals;
 		if (Net_GoalHuntTM_CapturedGoals.existskey(Login)) GUIPlayerGoals = Net_GoalHuntTM_CapturedGoals[Login];
 		if (GUIPlayerGoals.exists(Position)) { Frame.Hide(); continue; }
+		if (GoalFreshness == -1) { Frame.Hide(); continue; }
 		
 		// ---------------------------------- //
 		// Get marker height depending on the Goal type
