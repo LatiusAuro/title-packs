@@ -1,6 +1,6 @@
 // --------------------------------------- \\
 // CHECKPOINT HUNTERS MODE by Latius Auro  \\
-// Script version v0.8.8 (12/04/18)        \\
+// Script version v0.8.9 (13/04/18)        \\
 // Based on Domino's Goal Hunt mode script \\
 // --------------------------------------- \\
 
@@ -19,7 +19,7 @@ Highest combined score at the end of the match wins!
 #Extends "Modes/TrackMania/ModePursuit.Script.txt"
 
 #Const CompatibleMapTypes  			"GoalHuntArena" //Uses the same arenas as GoalHunt
-#Const Version              		"0.8.8"
+#Const Version              		"0.8.9"
 #Const ScriptName           		"Modes/TrackMania/CPHunters.Script.txt"
 
 #Include "TextLib" as TextLib
@@ -187,7 +187,7 @@ if (!MapValidated) {
 }
 ***
 
-***Match_StartMap***
+***Match_StartRound***
 ***
 //Code to execute when a map is starting
 
@@ -372,6 +372,11 @@ if (PUR_TimeReachedLimit()) {
 
 ***Match_EndRound***
 ***
+// Detach the interface
+Layers::Detach("GoalHuntTM:Markers");
+
+UIManager.UIAll.CountdownEndTime = -1;
+
 //Code to trigger at the end of a round
 PursuitUI::SetStartTime(-1);
 TopScores::RoundEnd();
@@ -403,29 +408,10 @@ UIManager.UIAll.ScoreTableVisibility = CUIConfig::EVisibility::ForcedVisible;
 Message::CleanAllMessages();
 PUR_PlaySound(CUIConfig::EUISound::EndRound, 0);
 
+Layers::Detach("GoalHuntTM:PointsCount");
+
 // Stop map after reaching rounds limit
 if (MB_GetRoundCount() >= G_NumRounds) MB_StopMap();
-***
-
-***Match_EndMap***
-***
-//Code to execute at the end of a match/map
-
-// Detach the interface
-Layers::Detach("CPHuntersTM:Markers");
-
-UIManager.UIAll.CountdownEndTime = -1;
-PursuitUI::SetStartTime(-1);
-TopScores::RoundEnd();
-TM::WaitRaceAll();
-Replay_Stop();
-
-MB_Sleep(3000);
-
-UIManager.UIAll.UISequence = CUIConfig::EUISequence::EndRound;
-Message::CleanAllMessages();
-PUR_PlaySound(CUIConfig::EUISound::EndRound, 0);
-Layers::Detach("CPHuntersTM:PointsCount");
 ***
 
 // ---------------------------------- //
