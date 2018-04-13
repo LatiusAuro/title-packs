@@ -1,6 +1,6 @@
 // --------------------------------------- \\
 // CHECKPOINT HUNTERS MODE by Latius Auro  \\
-// Script version v0.8.2 (12/04/18)        \\
+// Script version v0.8.8 (12/04/18)        \\
 // Based on Domino's Goal Hunt mode script \\
 // --------------------------------------- \\
 
@@ -19,7 +19,7 @@ Highest combined score at the end of the match wins!
 #Extends "Modes/TrackMania/ModePursuit.Script.txt"
 
 #Const CompatibleMapTypes  			"GoalHuntArena" //Uses the same arenas as GoalHunt
-#Const Version              		"0.8.2"
+#Const Version              		"0.8.8"
 #Const ScriptName           		"Modes/TrackMania/CPHunters.Script.txt"
 
 #Include "TextLib" as TextLib
@@ -53,29 +53,29 @@ Highest Score once someone collects all Checkpoints, or when time runs out, wins
 #Const C_NbCheckpointsRequired		5	// Min number of Checkpoints needed to be a valid map
 #Const C_RespawnPenaltyPoints		-1	// Penalty for respawning
 #Const C_MinPoints					1	// Min points
-#Const C_TimeLimitCap				900	// Absolute max value for the Time Limit
+#Const C_TimeLimitCap				900	// Absolute max value for the Time Limit (15 minutes)
 
 // Min and Max values for settings:
-#Const C_MinTimeLimit				60	// Min value for TimeLimit
-#Const C_MaxTimeLimit				600	// Max value for TimeLimit
-#Const C_MinExtraTime 				1	// Min value for ExtraTimeLimit
-#Const C_MaxExtraTime				20	// Mac value for ExtraTimeLimit
+#Const C_MinTimeLimit				60	// Min value for TimeLimit (1 minute)
+#Const C_MaxTimeLimit				600	// Max value for TimeLimit (10 minutes)
+#Const C_MinExtraTime 				1	// Min value for ExtraTimeLimit (+1s per CP)
+#Const C_MaxExtraTime				20	// Mac value for ExtraTimeLimit (+20s per CP)
 #Const C_MinRounds					1	// Min value for NumRounds
 #Const C_MaxRounds					5	// Max value for NumRounds
 #Const C_MinReduction				1	// Min value for CapturePointReduction
 #Const C_MinMaxPointsPerCapture		3	// Min value for MaxPointsPerCapture
-#Const C_MinModIncrease				5	// Min value for ModifierIncrease
-#Const C_MaxModifierIncrease		100	// Max value for ModifierIncrease
+#Const C_MinModIncrease				5	// Min value for ModifierIncrease (5%)
+#Const C_MaxModifierIncrease		100	// Max value for ModifierIncrease (100%)
 #Const C_MinCaptureTiers			2	// Min value for CaptureTiers
 #Const C_MaxCaptureTiers			5	// Max value for CaptureTiers
 
 //Freshness Colours for the Checkpoints
-#Const C_SuperFreshCP				<0.0, 1.0, 0.0>		//Colour for a Super Fresh (Unclaimed) CP [0F0]	(Green)
-#Const C_FreshCP					<1.0, 0.9, 0.0>		//Colour for a Fresh (50%+ points) CP [FE0]		(Gold)
-#Const C_NotFreshCP					<0.5, 0.5, 0.5>		//Colour for a Not Fresh (<50% points) CP [888]	(Silver)
-#Const C_StaleCP					<0.85, 0.5, 0.2>	//Colour for a Stale (0/1 point) CP [D83]		(Bronze)
+#Const C_SuperFreshCP				<0.0, 1.0, 0.0>		//Colour for a Super Fresh (Unclaimed) CP 	[0F0] (Green)
+#Const C_FreshCP					<1.0, 0.9, 0.0>		//Colour for a Fresh (50%+ points) CP 		[FE0] (Gold)
+#Const C_NotFreshCP					<0.5, 0.5, 0.5>		//Colour for a Not Fresh (<50% points) CP 	[888] (Silver)
+#Const C_StaleCP					<0.85, 0.5, 0.2>	//Colour for a Stale (1 point) CP 			[D83] (Bronze)
 
-#Const C_CheckpointsColors [<0.0, 1.0, 0.0>, <1.0, 0.9, 0.0>, <0.5, 0.5, 0.5>, <0.85, 0.5, 0.2>]
+#Const C_CPColors [<0.0, 1.0, 0.0>, <1.0, 0.9, 0.0>, <0.5, 0.5, 0.5>, <0.85, 0.5, 0.2>]
 
 // ---------------------------------- //
 // Globales
@@ -85,7 +85,6 @@ declare Integer[] G_CheckpointsList;		// All checkpoints which are currently in 
 declare Integer[] G_CheckpointScore;		// The current number of points on offer for a Checkpoint
 declare Integer[] G_CheckpointFreshness;	// How fresh a Checkpoint currently is
 
-declare Text[] G_FreshnessText;
 declare Text[] G_CreatedMapMarkers;
 
 declare Integer StartTime;
@@ -134,12 +133,9 @@ SettingCorrection();
 
 // ---------------------------------- //
 // Create custom interface
-Layers::Create("GoalHuntTM:Markers", CreateManialinkMarkers());
-Layers::SetType("GoalHuntTM:Markers", CUILayer::EUILayerType::Markers);
-//Layers::Create("GoalHuntTM:Countdown", CreateManialinkCountdown());
-Layers::Create("GoalHuntTM:PointsCount", CreateManialinkPointsCount());
-
-G_FreshnessText = ["Super Fresh", "Fresh", "Not Fresh", "Stale"];
+Layers::Create("CPHuntersTM:Markers", CreateManialinkMarkers());
+Layers::SetType("CPHuntersTM:Markers", CUILayer::EUILayerType::Markers);
+Layers::Create("CPHuntersTM:PointsCount", CreateManialinkPointsCount());
 
 PursuitUI::SetSafeTimeDuration(0);
 UpdateInterface();
@@ -151,8 +147,8 @@ UpdateInterface();
 ***ScoresTable***
 ***
 ST2::SetColWidth("LibST_Name", 20.);
-TopScores::AddCategory("GoalHuntTM:Capture", "Most captures", "", 2.);
-TopScores::AddCategory("GoalHuntTM:Stunts", "Most stunts", "🔥", 3.);
+TopScores::AddCategory("CPHuntersTM:Capture", "Most captures", "", 2.);
+TopScores::AddCategory("CPHuntersTM:Stunts", "Most stunts", "🔥", 3.);
 TopScores::SetFormat(2, 1);
 ***
 
@@ -177,7 +173,7 @@ declare MapValidated = True;
 declare MapType = "";
 foreach (I in TL::Split("\\", Map.MapType)) MapType = I;
 
-if (MapType != CompatibleMapTypes) MapValidated = False; //If it's not a GoalHuntArena, it can't be used
+if (MapType != CompatibleMapTypes) MapValidated = False; //If it's not a CPHuntersArena, it can't be used
 if (NumCPs < C_NbCheckpointsRequired) MapValidated = False; //If there's less than 5 Checkpoints, it can't be used
 
 //Skip invalid maps
@@ -257,9 +253,8 @@ Replay_Start();
 PrepGoals();
 
 // Attach the interface
-//Layers::Attach("GoalHuntTM:Countdown");
-Layers::Attach("GoalHuntTM:Markers");
-Layers::Attach("GoalHuntTM:PointsCount");
+Layers::Attach("CPHuntersTM:Markers");
+Layers::Attach("CPHuntersTM:PointsCount");
 ***
 
 ***Match_Playloop***
@@ -284,7 +279,7 @@ foreach (Event in PendingEvents) {
 	// ---------------------------------- //
 	// On stunt
 	if (Event.Type == CTmModeEvent::EType::Stunt) {
-		TopScores::AddPoints(Event.Player.Score, "GoalHuntTM:Stunts", Event.Points);
+		TopScores::AddPoints(Event.Player.Score, "CPHuntersTM:Stunts", Event.Points);
 	}
 }
 
@@ -417,8 +412,7 @@ if (MB_GetRoundCount() >= G_NumRounds) MB_StopMap();
 //Code to execute at the end of a match/map
 
 // Detach the interface
-//Layers::Detach("GoalHuntTM:Countdown");
-Layers::Detach("GoalHuntTM:Markers");
+Layers::Detach("CPHuntersTM:Markers");
 
 UIManager.UIAll.CountdownEndTime = -1;
 PursuitUI::SetStartTime(-1);
@@ -431,7 +425,7 @@ MB_Sleep(3000);
 UIManager.UIAll.UISequence = CUIConfig::EUISequence::EndRound;
 Message::CleanAllMessages();
 PUR_PlaySound(CUIConfig::EUISound::EndRound, 0);
-Layers::Detach("GoalHuntTM:PointsCount");
+Layers::Detach("CPHuntersTM:PointsCount");
 ***
 
 // ---------------------------------- //
@@ -439,9 +433,8 @@ Layers::Detach("GoalHuntTM:PointsCount");
 // ---------------------------------- //
 ***EndServer***
 ***
-//Layers::Destroy("GoalHuntTM:Countdown");
-Layers::Destroy("GoalHuntTM:Markers");
-Layers::Destroy("GoalHuntTM:PointsCount");
+Layers::Destroy("CPHuntersTM:Markers");
+Layers::Destroy("CPHuntersTM:PointsCount");
 ***
 
 // ---------------------------------- //
@@ -477,34 +470,44 @@ Integer GetGoalPoints(Integer _CheckpointId) {
 // ---------------------------------- //
 /// Update the data sent to the interface
 Void UpdateInterface() {
-	declare netwrite Integer Net_GoalHuntTM_NbMaxGoals for Teams[0];
-	declare netwrite Integer Net_GoalHuntTM_UpdateTime for Teams[0];
-	declare netwrite Vec3 Net_GoalHuntTM_CurrentGoal for Teams[0];
-	declare netwrite Vec3[] Net_GoalHuntTM_GoalsOrder for Teams[0];
-	declare netwrite Vec3[][Text] Net_GoalHuntTM_CapturedGoals for Teams[0];
+	declare netwrite Integer Net_CPHuntersTM_NbMaxGoals for Teams[0];
+	declare netwrite Integer Net_CPHuntersTM_UpdateTime for Teams[0];
+	declare netwrite Vec3 Net_CPHuntersTM_CurrentGoal for Teams[0];
+	declare netwrite Vec3[] Net_CPHuntersTM_CheckpointsList for Teams[0];
+	declare netwrite Integer[] Net_CPHuntersTM_CheckpointScore for Teams[0];
+	declare netwrite Integer[] Net_CPHuntersTM_CheckpointFreshness for Teams[0];
+	declare netwrite Vec3[][Text] Net_CPHuntersTM_CapturedGoals for Teams[0];
 	
-	Net_GoalHuntTM_NbMaxGoals = NumCPs;
-	Net_GoalHuntTM_UpdateTime = Now;
-	Net_GoalHuntTM_GoalsOrder.clear();
-	Net_GoalHuntTM_CapturedGoals.clear();
+	Net_CPHuntersTM_NbMaxGoals = NumCPs;
+	Net_CPHuntersTM_UpdateTime = Now;
+	Net_CPHuntersTM_CheckpointsList.clear();
+	Net_CPHuntersTM_CheckpointScore.clear();
+	Net_CPHuntersTM_CheckpointFreshness.clear();
+	Net_CPHuntersTM_CapturedGoals.clear();
 	
 	// ---------------------------------- //
 	// Get the list of all capturable Goals
 	foreach (CheckpointId in G_CheckpointsList) {
 		// Get landmark position
 		declare Position = Checkpoints::GetPosition(CheckpointId);
-		Net_GoalHuntTM_GoalsOrder.add(Position);
+		Net_CPHuntersTM_CheckpointsList.add(Position);
+
+		// Get score and freshness
+		declare CPFreshness = G_CheckpointFreshness[CheckpointId];
+		declare CPScore = G_CheckpointScore[CheckpointId];
+		Net_CPHuntersTM_CheckpointScore.add(CPScore);
+		Net_CPHuntersTM_CheckpointFreshness.add(CPFreshness);
 	}
 	
 	// ---------------------------------- //
 	// Get list of Goals captured by players
 	foreach (Player in Players) {
 		declare Integer[] CapturedCheckpointsIds for Player;
-		Net_GoalHuntTM_CapturedGoals[Player.User.Login] = Vec3[];
+		Net_CPHuntersTM_CapturedGoals[Player.User.Login] = Vec3[];
 		
 		foreach (CheckpointId in CapturedCheckpointsIds) {
 			declare Position = Checkpoints::GetPosition(CheckpointId);
-			Net_GoalHuntTM_CapturedGoals[Player.User.Login].add(Position);
+			Net_CPHuntersTM_CapturedGoals[Player.User.Login].add(Position);
 		}
 	}
 	
@@ -519,9 +522,9 @@ Void UpdateInterface() {
 		// If a valid Freshness value
 		if (GoalFreshness != -1) {
 			// Configure marker apperance
-			declare MarkerId = G_FreshnessText[GoalFreshness]^" Goal";
+			declare MarkerId = CheckpointId^" Goal";
 			declare Color = <1., 1., 1.>;
-			if (C_CheckpointsColors.existskey(GoalFreshness)) Color = C_CheckpointsColors[GoalFreshness];
+			if (C_CPColors.existskey(GoalFreshness)) Color = C_CPColors[GoalFreshness];
 		
 			// Create marker
 			declare Position = Checkpoints::GetPosition(CheckpointId);
@@ -536,26 +539,34 @@ Void UpdateInterface() {
  *
  *	@param	_Player			The player that captures a checkpoint
  *	@param	_CheckpointId	Id of the checkpoint to capture
- *	@param	MaxCPs			The current Max CPs
+ *	@param	_MaxCPs			The current Max CPs
  *
  * @return  The new MaxCP
  */
-Integer CaptureCheckpoint(CTmPlayer _Player, Integer _CheckpointId, Integer MaxCPs) {
-	if (_Player == Null || _CheckpointId == -1) return MaxCPs;
+Integer CaptureCheckpoint(CTmPlayer _Player, Integer _CheckpointId, Integer _MaxCPs) {
+	if (_Player == Null || _CheckpointId == -1) return _MaxCPs;
 	
 	// Check if player haven't captured this goal yet
 	declare Integer[] CapturedCheckpointsIds for _Player;
-	if (CapturedCheckpointsIds.exists(_CheckpointId)) return MaxCPs;
+	if (CapturedCheckpointsIds.exists(_CheckpointId)) return _MaxCPs;
 	CapturedCheckpointsIds.add(_CheckpointId);
 
 
 	declare GoalPoints = G_CheckpointScore[_CheckpointId];
 	declare GoalFreshness = G_CheckpointFreshness[_CheckpointId];
-	if (GoalFreshness == -1) return MaxCPs;
-	declare GoalFreshnessText = G_FreshnessText[GoalFreshness];
+	if (GoalFreshness == -1) return _MaxCPs;
+	declare Text GoalFreshnessText;
+
+	switch (GoalFreshness) {
+		case 0 : GoalFreshnessText = "Super Fresh";
+		case 1 : GoalFreshnessText = "Fresh";
+		case 2 : GoalFreshnessText = "Not Fresh";
+		case 3 : GoalFreshnessText = "Stale";
+		default : GoalFreshnessText = "Unknown";
+	}
 
 	PUR_AddPoints(_Player, GoalPoints);
-	TopScores::AddPoints(_Player.Score, "GoalHuntTM:Capture", GoalPoints);
+	TopScores::AddPoints(_Player.Score, "CPHuntersTM:Capture", GoalPoints);
 	
 	//Notify player about the capture
 	Translations::SendStatusMessage(_Player, "You've captured a "^GoalFreshnessText^" Checkpoint!", 3000, 1);
@@ -563,15 +574,16 @@ Integer CaptureCheckpoint(CTmPlayer _Player, Integer _CheckpointId, Integer MaxC
 
 	declare Integer NumCapturedCheckpoints for _Player;
 	NumCapturedCheckpoints += 1;
-	declare Integer NewMaxCPs = MaxCPs;
-	if (NumCapturedCheckpoints > MaxCPs) {
+	declare Integer NewMaxCPs;
+	NewMaxCPs = _MaxCPs;
+	if (NumCapturedCheckpoints > _MaxCPs) {
 		NewMaxCPs = NumCapturedCheckpoints;
 
 		if (NewMaxCPs == (NumCPs - 1)){
 			//If the player has just got one CP left, announce it
 			Message::SendBigMessage(TL::Compose(_("$<%1$> has only 1 Checkpoint left to capture!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
 		}
-		else if (CPLeaderId != _Player.User.Id && !(MaxCPs == NumCPs) && !(MaxCPs == 1)){
+		else if (CPLeaderId != _Player.User.Id && !(NewMaxCPs == NumCPs) && !(NewMaxCPs == 1)){
 			Message::SendBigMessage(TL::Compose(_("$<%1$> is now leading in terms of number of Checkpoints captured!"), _Player.User.Name), 3000, 1, CUIConfig::EUISound::PhaseChange, 1);
 		}
 		
@@ -667,7 +679,7 @@ Text CreateManialinkMarkers() {
 		MarkersInstances ^= "<frameinstance modelid='FrameModel_GoalMarker' id='Frame_GoalMarker#"^I^"' hidden='1' />";
 	
 	return """
-<manialink version="3" name="GoalHuntTM:Markers">
+<manialink version="3" name="CPHuntersTM:Markers">
 <stylesheet>
 	<style class="text" halign="center" valign="center2" textsize="0" textemboss="1" textcolor="FFF" textfont="Eurostile_Bold" />
 </stylesheet>
@@ -683,13 +695,13 @@ Text CreateManialinkMarkers() {
 
 <script><!--
 /**
- *	GoalHuntTM: Markers
+ *	CPHuntersTM: Markers
  */
 
 #Include "MathLib" as ML
 #Include "TextLib" as TL
 
-#Const C_CheckpointsColors {{{C_CheckpointsColors}}}
+#Const C_CPColors {{{C_CPColors}}}
 
 // ---------------------------------- //
 // Main
@@ -706,14 +718,15 @@ foreach (Frame in Frame_GoalsMarkers) Label_MarkersDistances.add((Frame.GetFirst
 
 // ---------------------------------- //
 // Persistent settings
-declare persistent Persistent_GoalHuntTM_GoalsOnScreen for LocalUser = False;
+declare persistent Persistent_CPHuntersTM_GoalsOnScreen for LocalUser = False;
 
 // ---------------------------------- //
 // Netcode
-declare netread Integer Net_GoalHuntTM_NbMaxGoals for Teams[0];
-declare netread Integer Net_GoalHuntTM_UpdateTime for Teams[0];
-declare netread Vec3[] Net_GoalHuntTM_GoalsOrder for Teams[0];
-declare netread Vec3[][Text] Net_GoalHuntTM_CapturedGoals for Teams[0];
+declare netread Integer Net_CPHuntersTM_UpdateTime for Teams[0];
+declare netread Vec3[] Net_CPHuntersTM_CheckpointsList for Teams[0];
+declare netread Integer[] Net_CPHuntersTM_CheckpointScore for Teams[0];
+declare netread Integer[] Net_CPHuntersTM_CheckpointFreshness for Teams[0];
+declare netread Vec3[][Text] Net_CPHuntersTM_CapturedGoals for Teams[0];
 
 // ---------------------------------- //
 // Variables
@@ -735,8 +748,8 @@ ClientUI.MarkersXML = "";
 ***
 // ---------------------------------- //
 // Server script called an update
-if (PrevUpdateTime != Net_GoalHuntTM_UpdateTime) {
-	PrevUpdateTime = Net_GoalHuntTM_UpdateTime;
+if (PrevUpdateTime != Net_CPHuntersTM_UpdateTime) {
+	PrevUpdateTime = Net_CPHuntersTM_UpdateTime;
 	UpdateMarkers = 2;
 }
 
@@ -755,8 +768,8 @@ else if (PrevGUIPlayerId != NullId) {
 
 // ---------------------------------- //
 // Goals visiblity change
-if (PrevGoalsOnScreen != Persistent_GoalHuntTM_GoalsOnScreen) {
-	PrevGoalsOnScreen = Persistent_GoalHuntTM_GoalsOnScreen;
+if (PrevGoalsOnScreen != Persistent_CPHuntersTM_GoalsOnScreen) {
+	PrevGoalsOnScreen = Persistent_CPHuntersTM_GoalsOnScreen;
 	UpdateMarkers = 2;
 }
 
@@ -773,23 +786,23 @@ if (UpdateMarkers > 0) {
 
 	// Visibility
 	declare Visibility = "Always";
-	if (Persistent_GoalHuntTM_GoalsOnScreen) Visibility = "WhenInFrustum";
+	if (Persistent_CPHuntersTM_GoalsOnScreen) Visibility = "WhenInFrustum";
 	
 	// ---------------------------------- //
 	// Create marker for every Goal available
 	foreach (I => Frame in Frame_GoalsMarkers) {
-		Frame.Visible = Net_GoalHuntTM_GoalsOrder.existskey(I);
+		Frame.Visible = Net_CPHuntersTM_CheckpointsList.existskey(I);
 		if (!Frame.Visible) continue;
 		
 		// Goal parameters
-		declare Position = Net_GoalHuntTM_GoalsOrder[I];
-		declare GoalFreshness = GetGoalFreshness(CheckpointId);
-		declare Points = GetGoalPoints(CheckpointId);
+		declare Position = Net_CPHuntersTM_CheckpointsList[I];
+		declare GoalFreshness = Net_CPHuntersTM_CheckpointFreshness[I];
+		declare Points = Net_CPHuntersTM_CheckpointScore[I];
 		
 		// ---------------------------------- //
 		// Ignore goal if captured by the spectated player, or invalid
 		declare Vec3[] GUIPlayerGoals;
-		if (Net_GoalHuntTM_CapturedGoals.existskey(Login)) GUIPlayerGoals = Net_GoalHuntTM_CapturedGoals[Login];
+		if (Net_CPHuntersTM_CapturedGoals.existskey(Login)) GUIPlayerGoals = Net_CPHuntersTM_CapturedGoals[Login];
 		if (GUIPlayerGoals.exists(Position)) { Frame.Hide(); continue; }
 		if (GoalFreshness == -1) { Frame.Hide(); continue; }
 		
@@ -811,13 +824,21 @@ if (UpdateMarkers > 0) {
 		
 		// ---------------------------------- //
 		// Configure marker text
-		Label_MarkerGoalName.Value = MarkerText("$n$t%1", G_FreshnessText[GoalFreshness]);
+		switch (GoalFreshness) {
+			case 0 : Label_MarkerGoalName.Value = MarkerText("$n$t%1 %2", _("Super Fresh"), _("Checkpoint"));
+			case 1 : Label_MarkerGoalName.Value = MarkerText("$n$t%1 %2", _("Fresh"), _("Checkpoint"));
+			case 2 : Label_MarkerGoalName.Value = MarkerText("$n$t%1 %2", _("Not Fresh"), _("Checkpoint"));
+			case 3 : Label_MarkerGoalName.Value = MarkerText("$n$t%1 %2", _("Stale"), _("Checkpoint"));
+			default : Label_MarkerGoalName.Value = MarkerText("$n$t%1 %2", _("Unknown"), _("Checkpoint"));
+		}
+
+		
 		Label_MarkerNbPoints.Value = MarkerText("$n$t%1 - %2", _("Points"), TL::ToText(Points));
 		
 		// ---------------------------------- //
 		// Set the marker color
 		declare Color = <.75, .75, .75>;
-		if (C_CheckpointsColors.existskey(GoalFreshness)) Color = C_CheckpointsColors[GoalFreshness];
+		if (C_CPColors.existskey(GoalFreshness)) Color = C_CPColors[GoalFreshness];
 
 		Label_MarkerGoalName.TextColor = Brightness(Color, 2.);
 		Quad_MarkerIcon.Colorize = Color;
@@ -881,7 +902,7 @@ main() {
  */
 Text CreateManialinkPointsCount() {
 	return """
-<manialink version="3" name="GoalHuntTM:PointsCount">
+<manialink version="3" name="CPHuntersTM:PointsCount">
 <stylesheet>
 	<style class="Font" halign="center" valign="center2" textemboss="1" textcolor="FFF" textfont="RajdhaniMono" />
 </stylesheet>
@@ -898,7 +919,7 @@ Text CreateManialinkPointsCount() {
 
 <script><!--
 /**
- *	GoalHuntTM: PointsCount
+ *	CPHuntersTM: PointsCount
  */
 
 #Include "MathLib" as ML
